@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Nuestros Productos - Platzi Store{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="hero-title" style="font-size: 2.5rem; color: white;">Nuestros Productos</h1>
+        <a href="{% url 'create_product' %}" class="btn btn-secondary"><i class="fas fa-plus-circle"></i> Crear Producto</a>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <form method="GET" action="{% url 'products_list' %}" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+            <div style="flex: 1; min-width: 200px;">
+                <label for="product_id" class="form-label">Buscar por ID de Producto:</label>
+                <input type="number" name="product_id" id="product_id" class="form-control" placeholder="Ej: 4" value="{{ search_values.product_id|default:'' }}">
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label for="category_id" class="form-label">Filtrar por ID de Categoría:</label>
+                <input type="number" name="category_id" id="category_id" class="form-control" placeholder="Ej: 1" value="{{ search_values.category_id|default:'' }}">
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn"><i class="fas fa-search"></i> Buscar</button>
+                <a href="{% url 'products_list' %}" class="btn btn-secondary" style="background: #8a9baf;">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="product-grid">
+        {% for product in products %}
+        <a href="{% url 'product_detail' product.id %}" style="text-decoration: none; color: inherit;">
+            <div class="product-card">
+                <img src="{{ product.images.0 }}" alt="{{ product.title }}" class="product-image">
+                <div class="product-info">
+                    <h2 class="product-title">{{ product.title }}</h2>
+                    <p class="product-price">${{ product.price }}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #666; margin-bottom: 1rem; padding: 0 0.5rem;">
+                        <span>ID: {{ product.id }}</span>
+                        <span>Categoría ID: {{ product.category.id }}</span>
+                    </div>
+                    <p class="product-description">{{ product.description|truncatewords:20 }}</p>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <p style="color: white; grid-column: 1 / -1; text-align: center; font-size: 1.2rem;">No se encontraron productos o hubo un error al cargarlos.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

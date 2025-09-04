@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Platzi Store{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Platzi Store API</h1>
+        <p class="hero-subtitle">La solución perfecta para el prototipo de su sitio web de comercio electrónico o compras</p>
+        
+        <div style="margin-top: 2rem;">
+            <a href="{% url 'products_list' %}" class="btn" style="margin-right: 1rem;">
+                <i class="fas fa-eye"></i> Ver Productos
+            </a>
+            <a href="{% url 'create_product' %}" class="btn btn-secondary">
+                <i class="fas fa-plus-circle"></i> Crear Producto
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="container">
+    <div class="card" style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="font-family: 'Poppins', sans-serif; color: #667eea; margin-bottom: 1rem;">
+            <i class="fas fa-rocket"></i> Características
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-top: 2rem; text-align: left;">
+            <div style="padding: 1.5rem; border-radius: 15px; background: linear-gradient(135deg, #ff6b6b20, #ff8e5320);">
+                <i class="fas fa-search" style="font-size: 2rem; color: #ff6b6b; margin-bottom: 1rem;"></i>
+                <h3 style="color: #333; margin-bottom: 0.5rem;">Obtener Todos Los Productos</h3>
+                <p style="color: #666;">Recupere todos los productos de la API de Platzi Fake con una hermosa visualización</p>
+            </div>
+            <div style="padding: 1.5rem; border-radius: 15px; background: linear-gradient(135deg, #4ecdc420, #44a08d20);">
+                <i class="fas fa-plus-circle" style="font-size: 2rem; color: #4ecdc4; margin-bottom: 1rem;"></i>
+                <h3 style="color: #333; margin-bottom: 0.5rem;">Agregar Productos</h3>
+                <p style="color: #666;">Crea nuevos productos y agrégalos al catálogo de tu tienda</p>
+            </div>
+            <div style="padding: 1.5rem; border-radius: 15px; background: linear-gradient(135deg, #667eea20, #764ba220);">
+                <i class="fas fa-mobile-alt" style="font-size: 2rem; color: #667eea; margin-bottom: 1rem;"></i>
+                <h3 style="color: #333; margin-bottom: 0.5rem;">Diseño Responsivo</h3>
+                <p style="color: #666;">Diseño moderno, priorizando los dispositivos móviles, con animaciones fluidas.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="font-family: 'Poppins', sans-serif; color: #667eea; margin-bottom: 1rem;">
+            <i class="fas fa-code"></i> API Endpoints
+        </h2>
+        <div style="background: #2d3748; border-radius: 10px; padding: 1.5rem; color: #e2e8f0; font-family: 'Courier New', monospace;">
+            <div style="margin-bottom: 1rem;">
+                <span style="color: #4ecdc4; font-weight: bold;">[GET]</span> 
+                <span style="color: #ffd93d;">https://api.escuelajs.co/api/v1/products</span>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <span style="color: #ff6b6b; font-weight: bold;">[POST]</span> 
+                <span style="color: #ffd93d;">https://api.escuelajs.co/api/v1/products</span>
+            </div>
+            <div>
+                <span style="color: #4ecdc4; font-weight: bold;">[GET]</span> 
+                <span style="color: #ffd93d;">https://api.escuelajs.co/api/v1/products/{id}</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .hero-section {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="%23ffffff10" points="0,0 1000,300 1000,1000 0,700"/><polygon fill="%23ffffff05" points="0,300 1000,100 1000,400 0,600"/></svg>');
+        z-index: -1;
+    }
+
+</style>
+{% endblock %}

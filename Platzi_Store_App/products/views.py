@@ -1,0 +1,200 @@
+import requests
+import json
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+
+# URL base de la API de Platzi Fake Store
+API_URL = "https://api.escuelajs.co/api/v1/products/"
+CATEGORIES_API_URL = "https://api.escuelajs.co/api/v1/categories/"
+
+def home(request):
+    """
+    Renderiza la página de inicio.
+    """
+    return render(request, 'home.html')
+
+def product_list(request):
+    """
+    Muestra una lista de productos.
+    Permite filtrar por ID de categoría o buscar por ID de producto.
+    """
+    product_id_query = request.GET.get('product_id')
+    category_id_query = request.GET.get('category_id')
+    
+    if product_id_query:
+        try:
+            product_id = int(product_id_query)
+            return redirect('product_detail', product_id=product_id)
+        except (ValueError, TypeError):
+            messages.error(request, "Por favor, introduce un ID de producto válido (un número).")
+            return redirect('products_list')
+
+    products = []
+    try:
+        if category_id_query:
+            try:
+                category_id = int(category_id_query)
+                response = requests.get(f"{CATEGORIES_API_URL}{category_id}/products")
+                response.raise_for_status()
+                products = response.json()
+                if not products:
+                    messages.warning(request, f"No se encontraron productos para la categoría ID: {category_id}.")
+                else:
+                    messages.success(request, f"Mostrando productos de la categoría ID: {category_id}.")
+            except ValueError:
+                messages.error(request, "Por favor, introduce un ID de categoría válido (un número).")
+                return redirect('products_list')
+            except requests.RequestException:
+                messages.error(request, f"No se pudo encontrar la categoría con ID: {category_id_query}.")
+                return redirect('products_list')
+        else:
+            response = requests.get(f"{API_URL}?offset=0&limit=20")
+            response.raise_for_status()
+            products = response.json()
+
+    except requests.RequestException as e:
+        messages.error(request, f"Error al comunicar con la API: {e}")
+        products = []
+
+    valid_products = []
+    for p in products:
+        if 'category' not in p and category_id_query:
+            p['category'] = {'id': category_id_query}
+            
+        if p.get('images') and isinstance(p.get('images'), list) and len(p['images']) > 0 and p.get('price', 0) > 0 and p.get('category'):
+            if isinstance(p['images'][0], str) and p['images'][0].startswith('http'):
+                 valid_products.append(p)
+    
+    search_values = {
+        'product_id': product_id_query,
+        'category_id': category_id_query
+    }
+
+    return render(request, 'product_list.html', {'products': valid_products, 'search_values': search_values})
+
+def create_product(request):
+    """
+    Maneja la creación de un nuevo producto y redirige a su página de detalle.
+    """
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        price = request.POST.get('price')
+        description = request.POST.get('description')
+        category_id = request.POST.get('categoryId')
+        image_url = request.POST.get('image')
+
+        if not all([title, price, description, category_id, image_url]):
+            messages.error(request, "Todos los campos son obligatorios.")
+            return render(request, 'create.html', {'form_data': request.POST})
+
+        try:
+            payload = {
+                "title": title,
+                "price": int(price),
+                "description": description,
+                "categoryId": int(category_id),
+                "images": [image_url]
+            }
+            response = requests.post(API_URL, json=payload)
+            response.raise_for_status()
+            new_product = response.json()
+            if response.status_code == 201 and 'id' in new_product:
+                 messages.success(request, f"¡Producto '{new_product.get('title')}' creado con éxito!")
+                 return redirect('product_detail', product_id=new_product['id'])
+            else:
+                error_message = new_product.get('message', 'Ocurrió un error desconocido en la API.')
+                messages.error(request, f"Error de la API: {error_message}")
+        except (requests.RequestException, ValueError) as e:
+            messages.error(request, f"Error al crear el producto: {e}")
+        return render(request, 'create.html', {'form_data': request.POST})
+    return render(request, 'create.html')
+
+def product_detail(request, product_id):
+    """
+    Muestra el detalle de un producto específico obtenido de la API.
+    """
+    try:
+        response = requests.get(f"{API_URL}{product_id}")
+        response.raise_for_status()
+        product = response.json()
+        if not (product.get('images') and isinstance(product.get('images'), list) and len(product['images']) > 0):
+            product['images'] = ['https://via.placeholder.com/640x480.png?text=No+Image']
+        if not (product.get('category') and isinstance(product.get('category'), dict)):
+            product['category'] = {'name': 'Sin categoría', 'id': 'N/A'}
+    except requests.RequestException:
+        messages.error(request, "El producto solicitado no existe o no se pudo encontrar.")
+        return redirect('products_list')
+    return render(request, 'product_detail.html', {'product': product})
+
+def update_product(request, product_id):
+    """
+    Maneja la actualización de un producto existente.
+    """
+    product_url = f"{API_URL}{product_id}"
+
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        price = request.POST.get('price')
+        description = request.POST.get('description')
+        image_url = request.POST.get('image')
+
+        if not all([title, price, description, image_url]):
+            messages.error(request, "Todos los campos son obligatorios.")
+            try:
+                response = requests.get(product_url)
+                response.raise_for_status()
+                product = response.json()
+            except requests.RequestException:
+                messages.error(request, "No se pudo recuperar el producto para editar.")
+                return redirect('products_list')
+            return render(request, 'update_product.html', {'product': product})
+
+        try:
+            payload = { "title": title, "price": int(price), "description": description, "images": [image_url] }
+            response = requests.put(product_url, json=payload)
+            response.raise_for_status()
+            updated_product = response.json()
+            messages.success(request, f"Producto '{updated_product.get('title')}' actualizado con éxito.")
+            return redirect('product_detail', product_id=updated_product['id'])
+        except (requests.RequestException, ValueError) as e:
+            messages.error(request, f"Error al actualizar el producto: {e}")
+            submitted_data = {'id': product_id, 'title': title, 'price': price, 'description': description, 'images': [image_url]}
+            return render(request, 'update_product.html', {'product': submitted_data})
+    else: # GET request
+        try:
+            response = requests.get(product_url)
+            response.raise_for_status()
+            product = response.json()
+            
+            if isinstance(product.get('images'), str):
+                try:
+                    product['images'] = json.loads(product['images'])
+                except json.JSONDecodeError:
+                    product['images'] = json.loads(product['images'].replace("'", '"'))
+            
+            if not (product.get('images') and isinstance(product.get('images'), list) and len(product['images']) > 0):
+                 product['images'] = ['']
+        except requests.RequestException:
+            messages.error(request, "El producto que intentas editar no existe.")
+            return redirect('products_list')
+        
+        return render(request, 'update_product.html', {'product': product})
+
+@require_POST
+def delete_product(request, product_id):
+    """
+    Elimina un producto de la tienda.
+    """
+    try:
+        response = requests.delete(f"{API_URL}{product_id}")
+        response.raise_for_status()
+        
+        if response.json() is True:
+            messages.success(request, "Producto eliminado con éxito.")
+        else:
+            messages.error(request, "La API no confirmó la eliminación del producto.")
+    except requests.RequestException as e:
+        messages.error(request, f"Error al eliminar el producto: {e}")
+
+    return redirect('products_list')

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card" style="display: flex; flex-wrap: wrap; gap: 2rem;">
+        <!-- Galería de Imágenes -->
+        <div style="flex: 1; min-width: 300px;">
+            <img src="{{ product.images.0 }}" alt="{{ product.title }}" style="width: 100%; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+            <!-- Miniaturas (si hay más de una imagen) -->
+            {% if product.images|length > 1 %}
+            <div style="display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap;">
+                {% for image in product.images %}
+                <img src="{{ image }}" alt="Thumbnail" style="width: 80px; height: 80px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.3s;">
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Información del Producto -->
+        <div style="flex: 2; min-width: 300px;">
+            <h1 class="product-title" style="font-size: 2.5rem;">{{ product.title }}</h1>
+            <p style="font-size: 1rem; color: #764ba2; font-weight: 500; margin-bottom: 1rem;">Categoría: {{ product.category.name }}</p>
+            <div style="font-size: 0.9rem; color: #555; background: #f4f4f9; padding: 0.5rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: inline-flex; gap: 1.5rem; border: 1px solid #e0e0e0;">
+                <span><strong>ID Producto:</strong> {{ product.id }}</span>
+                <span><strong>ID Categoría:</strong> {{ product.category.id }}</span>
+            </div>
+            <p class="product-price" style="font-size: 2rem; margin-bottom: 1.5rem;">${{ product.price }}</p>
+            <h3 style="font-family: 'Poppins', sans-serif; margin-bottom: 0.5rem; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem;">Descripción</h3>
+            <p class="product-description" style="font-size: 1rem;">{{ product.description }}</p>
+            
+            <div style="margin-top: 2rem; display: flex; align-items: center; gap: 1rem;">
+                <a href="{% url 'update_product' product.id %}" class="btn"><i class="fas fa-edit"></i> Editar</a>
+                <form action="{% url 'delete_product' product.id %}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este producto?');" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn" style="background: #c82333;"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                </form>
+                <a href="{% url 'products_list' %}" class="btn btn-secondary" style="margin-left: auto;"><i class="fas fa-arrow-left"></i> Volver a la lista</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
