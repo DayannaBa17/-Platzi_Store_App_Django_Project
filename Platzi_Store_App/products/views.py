@@ -3,6 +3,7 @@ import json
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 # URL base de la API de Platzi Fake Store
 API_URL = "https://api.escuelajs.co/api/v1/products/"
@@ -17,37 +18,45 @@ def home(request):
 def product_list(request):
     """
     Muestra una lista de productos.
-    Permite filtrar por ID de categoría o buscar por ID de producto.
+    Permite filtrar por categoría o buscar por nombre de producto.
     """
-    product_id_query = request.GET.get('product_id')
+    product_name_query = request.GET.get('product_name')
     category_id_query = request.GET.get('category_id')
     
-    if product_id_query:
-        try:
-            product_id = int(product_id_query)
-            return redirect('product_detail', product_id=product_id)
-        except (ValueError, TypeError):
-            messages.error(request, "Por favor, introduce un ID de producto válido (un número).")
-            return redirect('products_list')
+    # Fetch all categories for the dropdown
+    categories = []
+    try:
+        cat_response = requests.get(CATEGORIES_API_URL)
+        cat_response.raise_for_status()
+        # Filter out categories without a name or with a generic image
+        categories = [cat for cat in cat_response.json() if cat.get('name') and 'https://via.placeholder.com' not in cat.get('image', '')]
+    except requests.RequestException as e:
+        messages.error(request, f"Error al obtener las categorías: {e}")
 
     products = []
     try:
-        if category_id_query:
-            try:
-                category_id = int(category_id_query)
-                response = requests.get(f"{CATEGORIES_API_URL}{category_id}/products")
-                response.raise_for_status()
-                products = response.json()
-                if not products:
-                    messages.warning(request, f"No se encontraron productos para la categoría ID: {category_id}.")
-                else:
-                    messages.success(request, f"Mostrando productos de la categoría ID: {category_id}.")
-            except ValueError:
-                messages.error(request, "Por favor, introduce un ID de categoría válido (un número).")
-                return redirect('products_list')
-            except requests.RequestException:
-                messages.error(request, f"No se pudo encontrar la categoría con ID: {category_id_query}.")
-                return redirect('products_list')
+        # If a product name is searched
+        if product_name_query:
+            response = requests.get(f"{API_URL}?title={product_name_query}")
+            response.raise_for_status()
+            products = response.json()
+            if not products:
+                messages.warning(request, f"No se encontraron productos con el nombre: '{product_name_query}'.")
+            else:
+                messages.success(request, f"Mostrando resultados para: '{product_name_query}'.")
+        # If a category is selected, filter products
+        elif category_id_query and category_id_query.isdigit():
+            category_id = int(category_id_query)
+            response = requests.get(f"{CATEGORIES_API_URL}{category_id}/products")
+            response.raise_for_status()
+            products = response.json()
+            if not products:
+                messages.warning(request, f"No se encontraron productos para la categoría seleccionada.")
+            else:
+                # Find category name for the message
+                category_name = next((cat['name'] for cat in categories if cat['id'] == category_id), f"ID: {category_id}")
+                messages.success(request, f"Mostrando productos de la categoría: {category_name}.")
+        # Otherwise, show the general list
         else:
             response = requests.get(f"{API_URL}?offset=0&limit=20")
             response.raise_for_status()
@@ -57,6 +66,7 @@ def product_list(request):
         messages.error(request, f"Error al comunicar con la API: {e}")
         products = []
 
+    # Filter products that don't have the expected structure and add category info if missing
     valid_products = []
     for p in products:
         if 'category' not in p and category_id_query:
@@ -67,12 +77,17 @@ def product_list(request):
                  valid_products.append(p)
     
     search_values = {
-        'product_id': product_id_query,
+        'product_name': product_name_query,
         'category_id': category_id_query
     }
 
-    return render(request, 'product_list.html', {'products': valid_products, 'search_values': search_values})
+    return render(request, 'product_list.html', {
+        'products': valid_products, 
+        'search_values': search_values,
+        'categories': categories
+    })
 
+@login_required
 def create_product(request):
     """
     Maneja la creación de un nuevo producto y redirige a su página de detalle.
@@ -127,6 +142,7 @@ def product_detail(request, product_id):
         return redirect('products_list')
     return render(request, 'product_detail.html', {'product': product})
 
+@login_required
 def update_product(request, product_id):
     """
     Maneja la actualización de un producto existente.
@@ -181,8 +197,9 @@ def update_product(request, product_id):
         
         return render(request, 'update_product.html', {'product': product})
 
+@login_required
 @require_POST
-def delete_product(request, product_id):
+def delete_product(request, product_id):    
     """
     Elimina un producto de la tienda.
     """

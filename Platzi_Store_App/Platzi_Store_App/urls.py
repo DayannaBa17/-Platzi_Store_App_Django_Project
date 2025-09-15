@@ -10,4 +10,6 @@ urlpatterns = [
 
     # Incluye las URLs de la app 'products'
     path('products/', include('products.urls')),
+    
+    path('accounts/', include('accounts.urls')),
 ]

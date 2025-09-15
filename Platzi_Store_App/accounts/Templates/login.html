@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión - Platzi Store{% endblock %}
+
+{% block content %}
+<div class="card form-container">
+    <h2 style="text-align: center; margin-bottom: 1.5rem;">Iniciar Sesión</h2>
+    
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {% if field.name == 'password' %}
+                    <div class="password-wrapper">
+                        {{ field }}
+                        <i class="fas fa-eye toggle-password"></i>
+                    </div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+                {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+        {% endfor %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+        <button type="submit" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">Iniciar Sesión</button>
+    </form>
+    <p style="text-align: center; margin-top: 1.5rem;">¿No tienes una cuenta? <a href="{% url 'accounts:register' %}">Regístrate aquí</a>.</p>
+</div>
+{% endblock %}

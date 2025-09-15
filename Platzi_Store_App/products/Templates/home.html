@@ -8,13 +8,22 @@
         <h1 class="hero-title">Platzi Store API</h1>
         <p class="hero-subtitle">La solución perfecta para el prototipo de su sitio web de comercio electrónico o compras</p>
         
-        <div style="margin-top: 2rem;">
-            <a href="{% url 'products_list' %}" class="btn" style="margin-right: 1rem;">
-                <i class="fas fa-eye"></i> Ver Productos
-            </a>
-            <a href="{% url 'create_product' %}" class="btn btn-secondary">
-                <i class="fas fa-plus-circle"></i> Crear Producto
-            </a>
+        <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            {% if user.is_authenticated %}
+                <a href="{% url 'products_list' %}" class="btn">
+                    <i class="fas fa-eye"></i> Ver Productos
+                </a>
+                <a href="{% url 'create_product' %}" class="btn btn-secondary">
+                    <i class="fas fa-plus-circle"></i> Crear Producto
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-secondary">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </a>
+            {% endif %}
         </div>
     </div>
 </section>

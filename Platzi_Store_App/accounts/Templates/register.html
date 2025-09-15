@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro - Platzi Store{% endblock %}
+
+{% block content %}
+<div class="card form-container">
+    <h2 style="text-align: center; margin-bottom: 1.5rem;">Crear una cuenta</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {% if field.name == 'password' or field.name == 'password2' %}
+                    <div class="password-wrapper">
+                        {{ field }}
+                        <i class="fas fa-eye toggle-password"></i>
+                    </div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+                {% if field.name == 'password2' %}
+                    <small id="password-match-error" class="form-error" style="display: none; margin-top: 0.5rem;">Las contraseñas no coinciden.</small>
+                {% endif %}
+                {% if field.help_text %}<small style="color: grey; font-size: 0.8em; margin-top: 4px; display: block;">{{ field.help_text }}</small>{% endif %}
+                {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit" id="register-button" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">Registrarse</button>
+    </form>
+    <p style="text-align: center; margin-top: 1.5rem;">¿Ya tienes una cuenta? <a href="{% url 'accounts:login' %}">Inicia sesión aquí</a>.</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleccionamos los campos de contraseña, el botón y el mensaje de error
+    const passwordField1 = document.getElementById('id_password1');
+    const passwordField2 = document.getElementById('id_password2');
+    const registerButton = document.getElementById('register-button');
+    const passwordErrorMsg = document.getElementById('password-match-error');
+
+    // Función para validar si las contraseñas coinciden
+    function validatePasswords() {
+        // Si los campos existen
+        if (passwordField1 && passwordField2) {
+            // Si las contraseñas no coinciden
+            if (passwordField1.value !== passwordField2.value) {
+                registerButton.disabled = true; // Deshabilitar el botón
+                // Mostrar el mensaje de error solo si el segundo campo tiene texto
+                if (passwordField2.value.length > 0) {
+                    passwordErrorMsg.style.display = 'block';
+                    passwordField2.style.borderColor = '#c82333'; // Borde rojo para indicar error
+                }
+            } else {
+                // Si las contraseñas coinciden
+                registerButton.disabled = false; // Habilitar el botón
+                passwordErrorMsg.style.display = 'none'; // Ocultar el mensaje de error
+                passwordField2.style.borderColor = ''; // Restablecer el color del borde
+            }
+        }
+    }
+
+    // Ejecutar la validación al cargar la página (por si el navegador autocompleta)
+    validatePasswords();
+
+    // Añadir listeners para que la validación se ejecute en tiempo real al escribir
+    if (passwordField1) {
+        passwordField1.addEventListener('keyup', validatePasswords);
+    }
+    if (passwordField2) {
+        passwordField2.addEventListener('keyup', validatePasswords);
+    }
+});
+</script>
+{% endblock %}

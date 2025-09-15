@@ -30,13 +30,15 @@
             <h3 style="font-family: 'Poppins', sans-serif; margin-bottom: 0.5rem; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem;">Descripción</h3>
             <p class="product-description" style="font-size: 1rem;">{{ product.description }}</p>
             
-            <div style="margin-top: 2rem; display: flex; align-items: center; gap: 1rem;">
-                <a href="{% url 'update_product' product.id %}" class="btn"><i class="fas fa-edit"></i> Editar</a>
-                <form action="{% url 'delete_product' product.id %}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este producto?');" style="margin: 0;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn" style="background: #c82333;"><i class="fas fa-trash-alt"></i> Eliminar</button>
-                </form>
-                <a href="{% url 'products_list' %}" class="btn btn-secondary" style="margin-left: auto;"><i class="fas fa-arrow-left"></i> Volver a la lista</a>
+            <div style="margin-top: 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'update_product' product.id %}" class="btn"><i class="fas fa-edit"></i> Editar</a>
+                    <form action="{% url 'delete_product' product.id %}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este producto?');" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn" style="background: #c82333;"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                    </form>
+                {% endif %}
+                <a href="{% url 'products_list' %}" class="btn btn-secondary" style="margin-left: {% if not user.is_authenticated %}auto{% endif %};"><i class="fas fa-arrow-left"></i> Volver a la lista</a>
             </div>
         </div>
     </div>
